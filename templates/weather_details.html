@@ -1,0 +1,24 @@
+{% include 'layout.html' %}
+
+
+<body>
+    <div class="container">
+        <h1 class="mt-4">Weather Details</h1>
+
+        {% if weather %}
+            <h2>Weather in {{ city }}:</h2>
+            <p><strong>Temperature:</strong> {{ weather.temperature }}°C</p>
+            <p><strong>Condition:</strong> {{ weather.condition }}</p>
+            <p><strong>Description:</strong> {{ weather.weather_description }}</p>
+            <p><strong>Humidity:</strong> {{ weather.humidity }}%</p>
+            <p><strong>Wind Speed:</strong> {{ weather.wind_speed }} km/h</p>
+        {% elif error %}
+            <p><strong>Error:</strong> {{ error }}</p>
+        {% else %}
+            <p>No weather data available.</p>
+        {% endif %}
+
+        <a href="{{ url_for('main_page') }}" class="btn btn-secondary">Return to Main Page</a>
+    </div>
+</body>
+</html>

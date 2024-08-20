@@ -1,0 +1,61 @@
+
+{% include 'layout.html' %}
+
+<div class="container">
+    <h1 class="mt-4">Welcome to the Weather App</h1>
+    <p>Get current weather information and manage your favorite cities.</p>
+
+
+    <h1>Check Weather</h1>
+    <form method="GET" action="/weather/current_weather">
+        <div class="form-row">
+            <div class="form-group col-md-8">
+                <label for="city">Enter City</label>
+                <input type="text" class="form-control" id="city" name="city" placeholder="City name" required>
+            </div>
+            <div class="form-group col-md-4">
+                <button type="submit" class="btn btn-primary">Get Weather</button>
+            </div>
+        </div>
+    </form>
+    {% if request.query_params.get('error') %}
+        <div class="alert alert-danger">
+            {{ request.query_params.get('error') }}
+        </div>
+    {% endif %}
+    <hr>
+
+    <h2>Your Favorite Cities</h2>
+    {% if favorite_cities %}
+    <ul class="list-group">
+        {% for city in favorite_cities %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ city.name }}
+            <form method="POST" action="/favorite_city/{{ city.name }}/delete" style="display:inline;">
+                <button class="btn btn-danger btn-sm">Remove</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>You don't have any favorite cities yet. Add some!</p>
+    {% endif %}
+
+    <hr>
+
+    <form method="POST" action="/favorite_city/">
+        <div class="form-row">
+            <div class="form-group col-md-8">
+                <label for="new_city">Add a Favorite City</label>
+                <input type="text" class="form-control" id="new_city" name="city" placeholder="City name" required>
+            </div>
+            <div class="form-group col-md-4">
+                <button type="submit" class="btn btn-success mt-4">Add to Favorites</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="{{ url_for('static', path='js/bootstrap.js') }}"></script>
+</body>
+</html>
