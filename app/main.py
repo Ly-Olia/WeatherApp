@@ -1,22 +1,15 @@
-from datetime import datetime
-from typing import List
 import asyncio
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 
 from app import database, models
 from app.config import settings
-from app.crud import get_favorite_locations, fetch_weather_data, get_user, get_5_day_forecast, will_it_rain_today, \
-    get_coordinates
-from app.email_utils import send_email
+from app.crud import get_5_day_forecast, will_it_rain_today, get_coordinates
 from app.routers import users, weather, auth
 from starlette.staticfiles import StaticFiles
 from starlette.responses import RedirectResponse
 from starlette import status
 models.Base.metadata.create_all(bind=database.engine)
 
-from app.database import SessionLocal, engine
-from app.models import WeatherData
 
 app = FastAPI()
 

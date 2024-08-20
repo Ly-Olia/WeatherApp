@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import Optional
 
 class WeatherDataBase(BaseModel):
     city: str

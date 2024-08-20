@@ -1,16 +1,11 @@
-from typing import List
-import requests
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.responses import RedirectResponse
-import httpx
 from app import schemas, models, database, crud
-from app.config import settings
 
 from app.email_utils import send_email
 from app.routers.auth import get_current_user
-from app.schemas import WeatherData
 from fastapi import APIRouter, Request
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
