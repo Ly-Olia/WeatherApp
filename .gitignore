@@ -1,0 +1,11 @@
+.env.py
+new_venv/
+run_weather_email_sender.py
+weather_email_sender.log
+app/config.py
+__pycache__/
+*.pyc
+*.pyo
+.idea/
+.vscode/
+*.log
