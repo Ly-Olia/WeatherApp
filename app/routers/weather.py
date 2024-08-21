@@ -21,11 +21,18 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/", response_class=HTMLResponse, name="main_page")
-async def weather_main_page(request: Request):
+async def weather_main_page(request: Request, db: Session = Depends(database.get_db)):
     user = await get_current_user(request)
+
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
-    return templates.TemplateResponse("main_page.html", {"request": request, "favorite_cities": [], "user":user})
+    favorite_cities = crud.get_favorite_locations(db, user_id=user.get("id"))
+
+    return templates.TemplateResponse("main_page.html", {
+        "request": request,
+        "favorite_cities": favorite_cities,
+        "user": user
+    })
 
 
 # @router.get("/details", response_class=HTMLResponse)
@@ -103,49 +110,78 @@ class CustomApiException(HTTPException):
         super().__init__(status_code=400, detail="City already in favorites")
 
 
-@router.post("/favorite_city/", response_model=schemas.FavoriteLocation)
+@router.post("/favorite_city/", response_class=RedirectResponse)
 async def add_favorite_city(city: schemas.FavoriteLocationBase, db: Session = Depends(database.get_db),
-                            user=Depends(get_current_user)):
+                             user=Depends(get_current_user)):
+    """
+    Add a city to the user's favorite locations.
+    """
     if user is None:
-        return status.HTTP_302_FOUND
+        return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
 
-    if crud.favorite_location_exists(db, user_id=user.get("id"), city_name=city.name):
-        raise HTTPException(status_code=400, detail="City already in favorites")
+    user_id = user.get("id")
 
-    # Fetch coordinates from OpenWeatherMap API
-    latitude, longitude = await crud.get_coordinates(city.name)
+    if crud.favorite_location_exists(db, user_id=user_id, city_name=city.name):
+        error_message = "City already in favorites."
+        return RedirectResponse(url=f"/weather/?error_favorite={error_message}", status_code=status.HTTP_302_FOUND)
 
-    if latitude is None or longitude is None:
-        raise HTTPException(status_code=404, detail="City not found")
+    try:
+        latitude, longitude = await crud.get_coordinates(city.name)
+    except HTTPException as e:
+        error_message = f"City not found: {city.name}"
+        return RedirectResponse(url=f"/weather/?error_favorite={error_message}", status_code=status.HTTP_302_FOUND)
 
-    # Get user from the database (assuming you have a way to identify the user)
-    # For example, you might get the user ID from the token or session
-    user_id = user.get("id")  # Replace with actual logic to get the user ID
+    crud.create_favorite_location(db=db, user_id=user_id, city_name=city.name,
+                                  latitude=latitude, longitude=longitude)
 
-    # Create the favorite location
-    return crud.create_favorite_location(db=db, user_id=user_id, city_name=city.name, latitude=latitude,
-                                         longitude=longitude)
+    return RedirectResponse(url="/weather/", status_code=status.HTTP_302_FOUND)
 
-
-@router.delete("/favorite_city/{city_name}", response_model=schemas.FavoriteLocation)
+@router.post("/favorite_city/{city_name}/delete", response_class=RedirectResponse)
 def delete_favorite_city(city_name: str, db: Session = Depends(database.get_db), user=Depends(get_current_user)):
+    """
+    Deletes a city from the user's list of favorite locations.
+
+    """
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
-    # Check if the city exists in the user's favorite locations
+    # Find the favorite city in the user's list
     favorite_location = db.query(models.FavoriteLocation).filter(
         models.FavoriteLocation.name == city_name,
         models.FavoriteLocation.owner_id == user.get("id")
     ).first()
 
+    # If the city is not found, raise an error
     if not favorite_location:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="City not found in favorite locations")
 
-    # Delete the city from favorite locations
+    # Delete the city from the database
     db.delete(favorite_location)
     db.commit()
 
-    return favorite_location
+    # Redirect back to the main page after deletion
+    return RedirectResponse(url="/weather", status_code=status.HTTP_302_FOUND)
+
+
+# @router.delete("/favorite_city/{city_name}", response_model=schemas.FavoriteLocation)
+# def delete_favorite_city(city_name: str, db: Session = Depends(database.get_db), user=Depends(get_current_user)):
+#     if user is None:
+#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+#
+#     # Check if the city exists in the user's favorite locations
+#     favorite_location = db.query(models.FavoriteLocation).filter(
+#         models.FavoriteLocation.name == city_name,
+#         models.FavoriteLocation.owner_id == user.get("id")
+#     ).first()
+#
+#     if not favorite_location:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="City not found in favorite locations")
+#
+#     # Delete the city from favorite locations
+#     db.delete(favorite_location)
+#     db.commit()
+#
+#     return favorite_location
 
 
 @router.post("/send-welcome-email/")

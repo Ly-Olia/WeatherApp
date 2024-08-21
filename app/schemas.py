@@ -43,6 +43,7 @@ class Login(BaseModel):
     email: str
     password: str
 
+
 class FavoriteLocationBase(BaseModel):
     name: str
 
@@ -54,6 +55,7 @@ class FavoriteLocation(FavoriteLocationBase):
     owner_id: int
     latitude: str
     longitude: str
+    name: str
 
     class Config:
         from_attributes = True

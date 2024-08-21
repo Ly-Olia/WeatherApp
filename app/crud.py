@@ -48,7 +48,11 @@ def get_all_users(db: Session):
     return db.query(models.Users).all()
 
 
-def get_favorite_locations(db: Session, user_id: int):
+def get_favorite_locations(db: Session, user_id: int) -> list[models.FavoriteLocation]:
+    """
+        Retrieve a list of favorite locations for a given user.
+
+        """
     return db.query(models.FavoriteLocation).filter(models.FavoriteLocation.owner_id == user_id).all()
 
 
