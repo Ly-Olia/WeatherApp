@@ -53,14 +53,29 @@ async def get_weather(request: Request, city: str, db: Session = Depends(databas
 
     weather_data = await crud.get_current_weather(lat, lon)
     if weather_data is None:
-        return RedirectResponse(url=f"/weather/?error=Weather data not found for '{city}'.", status_code=status.HTTP_302_FOUND)
+        return RedirectResponse(url=f"/weather/?error=Weather data not found for '{city}'.",
+                                status_code=status.HTTP_302_FOUND)
 
+    forecast_data = await crud.get_5_day_forecast(lat, lon)
+
+    # Call the function to check if it will rain today
+    will_rain, total_rain_volume, rain_times = crud.will_it_rain_today(forecast_data)
     return templates.TemplateResponse("weather_details.html", {
         "request": request,
         "city": city,
         "weather": weather_data,
+        "will_rain": will_rain,
+        "rain_volume": total_rain_volume,
+        "rain_times": rain_times,  # Pass rain times here
         "error": None
     })
+
+    # return templates.TemplateResponse("weather_details.html", {
+    #     "request": request,
+    #     "city": city,
+    #     "weather": weather_data,
+    #     "error": None
+    # })
 
     # async with httpx.AsyncClient() as client:
     #     user = await get_current_user(request)
@@ -240,32 +255,22 @@ def send_current_weather(db: Session = Depends(database.get_db), user: models.Us
 async def get_rain_forecast(city: str):
     lat, lon = await crud.get_coordinates(city)
     forecast_data = await crud.get_5_day_forecast(lat, lon)
-    crud.will_it_rain_today(forecast_data)
-    # return forecast_data
-    # if forecast_data:
-    #     rain_today = crud.will_it_rain_today(forecast_data)
-    #     if rain_today:
-    #         rain = "It will rain today."
-    #     else:
-    #         rain = "No rain expected today."
-    # else:
-    #     return "Failed to retrieve weather data."
-    # return {
-    #     "city": city,
-    #     # "state": state,
-    #     # "country": country,
-    #     "will_rain": rain,
-    #     "json": forecast_data
-    #     # "rain_volume_mm": rain_volume
-    # }
+
+
     if forecast_data:
-        will_rain, total_rain_volume, rain_times = crud.will_it_rain_today(forecast_data)
-        if will_rain:
-            return "It will rain today.", total_rain_volume, "mm ", rain_times, forecast_data
-        else:
-            return "No rain expected today.", total_rain_volume, "mm", rain_times, forecast_data
+        will_rain, total_rain_volume, rain_period = crud.will_it_rain_today(forecast_data)
+        return {
+            "city": city,
+            "will_rain": will_rain,
+            "rain_volume": total_rain_volume,
+            "rain_period": rain_period,
+            "weather": forecast_data
+        }
     else:
-        return "Failed to retrieve weather data."
+        return {"error": "Failed to retrieve weather data."}
+
+
+
 
 
 @router.post("/check-extreme-weather/")

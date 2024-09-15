@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import httpx
 import requests
 from fastapi import HTTPException
@@ -173,11 +173,25 @@ async def get_5_day_forecast(lat, lon, units="metric"):
     return response.json()
 
 
+def categorize_time(dt):
+    """Categorize the time into morning, afternoon, evening, or night."""
+    hour = dt.hour
+    if 6 <= hour < 12:
+        return "morning"
+    elif 12 <= hour < 18:
+        return "afternoon"
+    elif 18 <= hour < 21:
+        return "evening"
+    else:
+        return "night"
+
+
 def will_it_rain_today(forecast_data):
     current_date = datetime.utcnow().date()
     rain_today = False
-    rain_times = []
     total_rain_volume = 0.0
+
+    rain_periods = []  # Store raw rain periods as tuples of (start_time, end_time)
 
     for entry in forecast_data["list"]:
         forecast_time = datetime.utcfromtimestamp(entry["dt"])
@@ -186,12 +200,45 @@ def will_it_rain_today(forecast_data):
             for condition in weather_conditions:
                 if "rain" in condition["description"].lower():
                     rain_today = True
-                    rain_times.append(forecast_time.strftime("%Y-%m-%d %H:%M:%S"))
-                    if "rain" in entry:
-                        total_rain_volume += entry["rain"].get("3h", 0.0)
+                    rain_start_time = forecast_time
+                    rain_end_time = forecast_time + timedelta(hours=3)
+
+                    # Update total rain volume
+                    total_rain_volume += entry["rain"].get("3h", 0.0)
+
+                    # Append the rain period
+                    rain_periods.append((rain_start_time, rain_end_time))
                     break
 
-    return rain_today, total_rain_volume, rain_times
+    # Combine overlapping rain periods
+    # print(rain_periods)
+    combined_rain_periods = []
+    if rain_periods:
+        # Sort by start time
+        rain_periods.sort(key=lambda x: x[0])
+
+        # Initialize the first period
+        current_start, current_end = rain_periods[0]
+
+        for start, end in rain_periods[1:]:
+            if start <= current_end:  # Overlapping or contiguous
+                current_end = max(current_end, end)  # Extend the end time if necessary
+            else:
+                combined_rain_periods.append((current_start, current_end))
+                current_start, current_end = start, end
+
+        # Add the last period
+        combined_rain_periods.append((current_start, current_end))
+
+    # Format combined rain periods for display
+    formatted_rain_periods = []
+    for start, end in combined_rain_periods:
+        formatted_rain_periods.append(f"{start.strftime('%I:%M %p')} ({categorize_time(start)}) - "
+                                       f"{end.strftime('%I:%M %p')} ({categorize_time(end)})")
+
+    total_rain_volume = round(total_rain_volume, 1)  # Round rain volume to 1 decimal
+    return rain_today, total_rain_volume, formatted_rain_periods
+
 
 
 async def check_severe_weather(lat: float, lon: float):

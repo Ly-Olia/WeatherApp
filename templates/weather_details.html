@@ -1,24 +1,50 @@
 {% include 'layout.html' %}
 
-
 <body>
-    <div class="container">
-        <h1 class="mt-4">Weather Details</h1>
+    <div class="container mt-5">
+        <h1 class="mb-4 text-center">Weather Details</h1>
 
-        {% if weather %}
-            <h2>Weather in {{ city }}:</h2>
-            <p><strong>Temperature:</strong> {{ weather.temperature }}°C</p>
-            <p><strong>Condition:</strong> {{ weather.condition }}</p>
-            <p><strong>Description:</strong> {{ weather.weather_description }}</p>
-            <p><strong>Humidity:</strong> {{ weather.humidity }}%</p>
-            <p><strong>Wind Speed:</strong> {{ weather.wind_speed }} km/h</p>
-        {% elif error %}
-            <p><strong>Error:</strong> {{ error }}</p>
-        {% else %}
-            <p>No weather data available.</p>
-        {% endif %}
+        <div class="card shadow">
+            <div class="card-body">
+                {% if weather %}
+                    <h2 class="card-title text-primary">Weather in {{ city }}:</h2>
+                    <hr>
+                    <p><strong><i class="fas fa-thermometer-half"></i> Temperature:</strong> {{ weather.temperature }}°C</p>
+                    <p><strong><i class="fas fa-cloud"></i> Condition:</strong> {{ weather.condition }}</p>
+                    <p><strong><i class="fas fa-info-circle"></i> Description:</strong> {{ weather.weather_description }}</p>
+                    <p><strong><i class="fas fa-tint"></i> Humidity:</strong> {{ weather.humidity }}%</p>
+                    <p><strong><i class="fas fa-wind"></i> Wind Speed:</strong> {{ weather.wind_speed }} km/h</p>
 
-        <a href="{{ url_for('main_page') }}" class="btn btn-secondary">Return to Main Page</a>
+                    <!-- Add rain forecast details -->
+                    <div class="mt-4 p-3 border rounded">
+                        <h3 class="text-success"><i class="fas fa-cloud-rain"></i> Rain Forecast</h3>
+                        {% if will_rain %}
+                            <p><strong>Rain is expected today.</strong></p>
+                            <p><strong>Total Rain Volume:</strong> {{ rain_volume }} mm</p>
+                            <p><strong>Expected Rain Times:</strong></p>
+                            <ul>
+                                {% for time in rain_times %}
+                                    <li>{{ time }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No rain expected today.</p>
+                        {% endif %}
+                    </div>
+                {% elif error %}
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> {{ error }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">No weather data available.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-4 text-center">
+            <a href="{{ url_for('main_page') }}" class="btn btn-secondary">Return to Main Page</a>
+        </div>
     </div>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
 </body>
-</html>
