@@ -31,7 +31,7 @@
         <ul class="list-group">
             {% for city in favorite_cities %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ city.name }}
+                <a href="/weather/current_weather?city={{ city.name }}">{{ city.name }}</a>
                 <form method="POST" action="/weather/favorite_city/{{ city.name }}/delete" style="display:inline;">
                     <button class="btn btn-danger btn-sm">Remove</button>
                 </form>
