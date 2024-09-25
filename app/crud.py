@@ -1,36 +1,48 @@
 from datetime import datetime, timedelta
+from typing import List, Tuple, Optional, Dict, Union, Type
+
 import httpx
 import requests
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+
 from . import models, schemas
 from .config import settings
 from .email_utils import send_email
-from .routers.weather import API_KEY
+from .models import Users, FavoriteLocation
 
 
-def get_weather_data(db: Session, city: str, country: str):
+def get_weather_data(db: Session, city: str, country: str) -> Optional[models.WeatherData]:
     return db.query(models.WeatherData).filter(models.WeatherData.city == city,
                                                models.WeatherData.country == country).first()
 
 
-def create_weather_data(db: Session, weather_data: schemas.WeatherDataCreate):
-    db_weather_data = models.WeatherData(**weather_data.dict())
+def create_weather_data(db: Session, weather_data: schemas.WeatherDataCreate) -> models.WeatherData:
+    db_weather_data = models.WeatherData(**weather_data.model_dump())
     db.add(db_weather_data)
     db.commit()
     db.refresh(db_weather_data)
     return db_weather_data
 
 
-def get_user(db: Session, user_id: int):
+def get_user(db: Session, user_id: int) -> Optional[models.Users]:
+    """
+    Retrieve a user by their ID from the database.
+    """
     return db.query(models.Users).filter(models.Users.id == user_id).first()
 
 
-def get_user_by_email(db: Session, email: str):
+def get_user_by_email(db: Session, email: str) -> Optional[models.Users]:
+    """
+    Retrieve a user by their email from the database.
+    """
     return db.query(models.Users).filter(models.Users.email == email).first()
 
 
-def create_user(db: Session, user: schemas.UserCreate):
+def create_user(db: Session, user: schemas.UserCreate) -> models.Users:
+    """
+    Create and store a new user in the database.
+    """
     db_user = models.Users(
         email=user.email,
         username=user.username,
@@ -44,23 +56,28 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 
-def get_all_users(db: Session):
+def get_all_users(db: Session) -> list[Type[Users]]:
+    """
+    Retrieve a list of all users from the database.
+    """
     return db.query(models.Users).all()
 
 
-def get_favorite_locations(db: Session, user_id: int) -> list[models.FavoriteLocation]:
+def get_favorite_locations(db: Session, user_id: int) -> list[Type[FavoriteLocation]]:
     """
-        Retrieve a list of favorite locations for a given user.
-
-        """
+    Retrieve a list of favorite locations for a given user.
+    """
     return db.query(models.FavoriteLocation).filter(models.FavoriteLocation.owner_id == user_id).all()
 
 
-async def get_coordinates(city: str, state: str = None, country: str = None):
+async def get_coordinates(city: str, state: Optional[str] = None, country: Optional[str] = None) -> Tuple[float, float]:
+    """
+    Fetch the geographic coordinates (latitude and longitude) of a city.
+    """
     geocode_params = {
         "q": f"{city},{state},{country}" if state and country else city,
         "limit": 1,
-        "appid": API_KEY
+        "appid": settings.API_KEY
     }
 
     async with httpx.AsyncClient() as client:
@@ -79,9 +96,12 @@ async def get_coordinates(city: str, state: str = None, country: str = None):
     return geocode_data[0]['lat'], geocode_data[0]['lon']
 
 
-async def get_current_weather(lat: float, lon: float):
+async def get_current_weather(lat: float, lon: float) -> schemas.WeatherData:
+    """
+    Fetch the current weather data for the given latitude and longitude.
+    """
     current_weather_url = (
-        f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}&units=metric"
+        f"http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={settings.API_KEY}&units=metric"
     )
 
     async with httpx.AsyncClient() as client:
@@ -108,7 +128,11 @@ async def get_current_weather(lat: float, lon: float):
     return weather
 
 
-def create_favorite_location(db: Session, user_id: int, city_name: str, latitude: float, longitude: float):
+def create_favorite_location(db: Session, user_id: int, city_name: str, latitude: float,
+                             longitude: float) -> models.FavoriteLocation:
+    """
+    Create and store a favorite location for a user in the database.
+    """
     db_location = models.FavoriteLocation(
         name=city_name,
         latitude=str(latitude),
@@ -121,15 +145,20 @@ def create_favorite_location(db: Session, user_id: int, city_name: str, latitude
     return db_location
 
 
-def favorite_location_exists(db: Session, user_id: int, city_name: str):
+def favorite_location_exists(db: Session, user_id: int, city_name: str) -> bool:
+    """
+    Check if a favorite location exists for a user.
+    """
     return db.query(models.FavoriteLocation).filter(
         models.FavoriteLocation.owner_id == user_id,
         models.FavoriteLocation.name == city_name
     ).first() is not None
 
 
-def fetch_weather_data(lat: float, lon: float):
-    """Fetch weather data from OpenWeatherMap API."""
+def fetch_weather_data(lat: float, lon: float) -> Dict[str, Union[float, int, str]]:
+    """
+    Fetch weather data from OpenWeatherMap API.
+    """
     url = f"http://api.openweathermap.org/data/2.5/weather"
     params = {
         "lat": lat,
@@ -156,11 +185,14 @@ def fetch_weather_data(lat: float, lon: float):
         raise Exception(f"Error fetching weather data: {response.status_code}")
 
 
-async def get_5_day_forecast(lat, lon, units="metric"):
+async def get_5_day_forecast(lat: float, lon: float, units: str = "metric") -> Dict:
+    """
+    Fetch a 5-day weather forecast for the given latitude and longitude.
+    """
     forecast_params = {
         "lat": lat,
         "lon": lon,
-        "appid": API_KEY,
+        "appid": settings.API_KEY,
         "units": units
     }
 
@@ -173,8 +205,10 @@ async def get_5_day_forecast(lat, lon, units="metric"):
     return response.json()
 
 
-def categorize_time(dt):
-    """Categorize the time into morning, afternoon, evening, or night."""
+def categorize_time(dt: datetime) -> str:
+    """
+    Categorize the time into morning, afternoon, evening, or night.
+    """
     hour = dt.hour
     if 6 <= hour < 12:
         return "morning"
@@ -186,15 +220,18 @@ def categorize_time(dt):
         return "night"
 
 
-def will_it_rain_today(forecast_data):
-    current_date = datetime.utcnow().date()
+def will_it_rain_today(forecast_data: Dict) -> Tuple[bool, float, List[str]]:
+    """
+    Determine if it will rain today based on the forecast data.
+    """
+    current_date = datetime.now().date()
     rain_today = False
     total_rain_volume = 0.0
 
     rain_periods = []  # Store raw rain periods as tuples of (start_time, end_time)
 
     for entry in forecast_data["list"]:
-        forecast_time = datetime.utcfromtimestamp(entry["dt"])
+        forecast_time = datetime.fromtimestamp(entry["dt"])
         if forecast_time.date() == current_date:
             weather_conditions = entry["weather"]
             for condition in weather_conditions:
@@ -211,7 +248,6 @@ def will_it_rain_today(forecast_data):
                     break
 
     # Combine overlapping rain periods
-    # print(rain_periods)
     combined_rain_periods = []
     if rain_periods:
         # Sort by start time
@@ -241,6 +277,9 @@ def will_it_rain_today(forecast_data):
 
 
 async def check_severe_weather(lat: float, lon: float):
+    """
+    Check if severe weather conditions are present at the given latitude and longitude.
+    """
     weather_data = await get_current_weather(lat, lon)
 
     severe_conditions = ["Thunderstorm", "Rain", "Snow", "Extreme"]
@@ -252,9 +291,28 @@ async def check_severe_weather(lat: float, lon: float):
     return None
 
 
+# async def send_severe_weather_alert(user: models.Users, weather_data: schemas.WeatherData):
+#     subject = "Severe Weather Alert!"
+#     body = (
+#         f"Dear {user.username},\n\n"
+#         f"Severe weather conditions are expected in {weather_data.city}.\n\n"
+#         f"Weather: {weather_data.weather_description}\n"
+#         f"Temperature: {weather_data.temperature}°C\n"
+#         f"Humidity: {weather_data.humidity}%\n"
+#         f"Wind Speed: {weather_data.wind_speed} m/s\n\n"
+#         f"Please take necessary precautions.\n\n"
+#         f"Best Regards,\nThe Weather App Team"
+#     )
+#
+#     send_email(subject, body, user.email)
+
+
 async def send_severe_weather_alert(user: models.Users, alert, city):
+    """
+    Send an email alert about severe weather conditions.
+    """
+
     alert_str = "\n".join(alert)
-    # Send the alert to the user
     message = (
         f"Severe weather conditions are expected in {city}.\n\n"
         f"Details: {alert_str}\n"
@@ -265,6 +323,9 @@ async def send_severe_weather_alert(user: models.Users, alert, city):
 
 
 async def check_extreme_weather(lat: float, lon: float) -> dict:
+    """
+    Check for extreme weather conditions and return alerts if any.
+    """
     weather_data = await get_current_weather(lat, lon)
 
     severe_conditions = {

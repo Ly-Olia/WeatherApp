@@ -1,27 +1,20 @@
-import sys
+from datetime import datetime, timedelta
+from typing import Optional
 
 import jwt as jwt
-from starlette.responses import RedirectResponse
-
-from app import models
-from app.database import engine, SessionLocal
-
-sys.path.append("..")
-
-from fastapi import Depends, HTTPException, status, APIRouter, Request, Response, Form
-from typing import Optional
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-
+from starlette.responses import RedirectResponse
+from fastapi import Depends, HTTPException, status, APIRouter, Request, Response, Form
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from datetime import datetime, timedelta
-
-from jose import jwt, JWTError
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-SECRET_KEY = "KlgH6AzYDeZeGwD288to79I3vTHT8wp7"
-ALGORITHM = "HS256"
+from app import models
+from app.config import settings
+from app.database import (engine, get_db)
+
 
 templates = Jinja2Templates(directory="templates")
 
@@ -50,23 +43,24 @@ class LoginForm:
         self.password = form.get("password")
 
 
-def get_db():
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
-
-
 def get_password_hash(password):
+    """
+    Hash a password using bcrypt.
+    """
     return bcrypt_context.hash(password)
 
 
 def verify_password(plain_password, hashed_password):
+    """
+    Verify a plain password against a hashed password.
+    """
     return bcrypt_context.verify(plain_password, hashed_password)
 
 
 def authenticate_user(username: str, password: str, db):
+    """
+    Authenticate a user by checking their credentials.
+    """
     user = db.query(models.Users) \
         .filter(models.Users.username == username) \
         .first()
@@ -80,25 +74,31 @@ def authenticate_user(username: str, password: str, db):
 
 def create_access_token(username: str, user_id: int,
                         expires_delta: Optional[timedelta] = None):
+    """
+    Create a JWT access token.
+    """
     encode = {"sub": username, "id": user_id}
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.now() + timedelta(minutes=15)
     encode.update({"exp": expire})
-    return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
 async def get_current_user(request: Request):
+    """
+    Retrieve the current user from the request's cookies.
+    """
     try:
         token = request.cookies.get("access_token")
         if token is None:
             return None
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         if username is None or user_id is None:
-            logout(request)
+            await logout(request)
         return {"username": username, "id": user_id}
     except JWTError:
         raise HTTPException(status_code=404, detail="Not Found")
@@ -107,6 +107,9 @@ async def get_current_user(request: Request):
 @router.post("/token")
 async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends(),
                                  db: Session = Depends(get_db)):
+    """
+    Log in the user and create an access token.
+    """
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         return False
@@ -121,11 +124,17 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
 
 @router.get("/", response_class=HTMLResponse)
 async def authenticationpage(request: Request):
+    """
+    Render the authentication (login) page.
+    """
     return templates.TemplateResponse("login.html", {"request": request})
 
 
 @router.post("/", response_class=HTMLResponse)
 async def login(request: Request, db: Session = Depends(get_db)):
+    """
+    Handle user login.
+    """
     try:
         form = LoginForm(request)
         await form.create_oauth_form()
@@ -143,6 +152,9 @@ async def login(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/logout")
 async def logout(request: Request):
+    """
+    Log the user out and render the login page.
+    """
     msg = "Logout Successful"
     response = templates.TemplateResponse("login.html", {"request": request, "msg": msg})
     response.delete_cookie(key="access_token")
@@ -151,6 +163,9 @@ async def logout(request: Request):
 
 @router.get("/register", response_class=HTMLResponse)
 async def register(request: Request):
+    """
+    Render the registration page.
+    """
     return templates.TemplateResponse("register.html", {"request": request})
 
 
@@ -158,6 +173,9 @@ async def register(request: Request):
 async def register_user(request: Request, email: str = Form(...), username: str = Form(...),
                         firstname: str = Form(...), lastname: str = Form(...), password: str = Form(...),
                         password2: str = Form(...), db: Session = Depends(get_db)):
+    """
+    Register a new user.
+    """
     validation1 = db.query(models.Users).filter(models.Users.username == username).first()
     validation2 = db.query(models.Users).filter(models.Users.email == email).first()
 

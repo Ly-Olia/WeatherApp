@@ -1,5 +1,5 @@
 # app/models.py
-
+from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -7,9 +7,12 @@ from sqlalchemy import func
 
 
 class Users(Base):
+    """
+    Model representing users in the application.
+    """
+
     __tablename__ = "users"
 
-    # Columns in the users table
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     username = Column(String, unique=True, index=True)
@@ -22,6 +25,10 @@ class Users(Base):
 
 
 class FavoriteLocation(Base):
+    """
+    Model representing a user's favorite locations.
+    """
+
     __tablename__ = "favorite_locations"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -34,6 +41,10 @@ class FavoriteLocation(Base):
 
 
 class WeatherData(Base):
+    """
+    Model representing weather data associated with locations.
+    """
+
     __tablename__ = "weather_data"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -45,6 +56,11 @@ class WeatherData(Base):
     weather_description = Column(String)
     recorded_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # Foreign key for user if you want to associate weather data with users
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("Users")
+
+
+class UserVerification(BaseModel):
+    old_password: str
+    password: str
+    password2: str

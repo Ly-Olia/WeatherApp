@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.responses import RedirectResponse
@@ -6,7 +6,6 @@ from app import schemas, models, database, crud
 
 from app.email_utils import send_email
 from app.routers.auth import get_current_user
-from fastapi import APIRouter, Request
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
 
@@ -14,13 +13,14 @@ router = APIRouter(
     prefix="/weather", tags=["weather"], responses={404: {"description": "Not Found"}}
 )
 
-API_KEY = "9a45e7fdc17743bdf127c34afe38cbeb"
-
 templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/", response_class=HTMLResponse, name="main_page")
 async def weather_main_page(request: Request, db: Session = Depends(database.get_db)):
+    """
+    Render the main weather page displaying favorite cities.
+    """
     user = await get_current_user(request)
 
     if user is None:
@@ -35,8 +35,11 @@ async def weather_main_page(request: Request, db: Session = Depends(database.get
 
 
 @router.get("/current_weather", response_class=HTMLResponse)
-async def get_weather(request: Request, city: str, db: Session = Depends(database.get_db),
+async def get_weather(request: Request, city: str,
                       user=Depends(get_current_user)):
+    """
+    Fetch and display the current weather for a given city.
+    """
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
 
@@ -63,11 +66,6 @@ async def get_weather(request: Request, city: str, db: Session = Depends(databas
         "rain_times": rain_times,  # Pass rain times here
         "error": None
     })
-
-
-class CustomApiException(HTTPException):
-    def __init__(self):
-        super().__init__(status_code=400, detail="City already in favorites")
 
 
 @router.post("/favorite_city/", response_class=RedirectResponse)
@@ -101,7 +99,6 @@ async def add_favorite_city(city: schemas.FavoriteLocationBase, db: Session = De
 def delete_favorite_city(city_name: str, db: Session = Depends(database.get_db), user=Depends(get_current_user)):
     """
     Deletes a city from the user's list of favorite locations.
-
     """
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
