@@ -14,7 +14,6 @@ router = APIRouter(
     prefix="/weather", tags=["weather"], responses={404: {"description": "Not Found"}}
 )
 
-
 API_KEY = "9a45e7fdc17743bdf127c34afe38cbeb"
 
 templates = Jinja2Templates(directory="templates")
@@ -33,11 +32,6 @@ async def weather_main_page(request: Request, db: Session = Depends(database.get
         "favorite_cities": favorite_cities,
         "user": user
     })
-
-
-# @router.get("/details", response_class=HTMLResponse)
-# async def weather_details_page(request: Request):
-#     return templates.TemplateResponse("weather_details.html", {"request": request})
 
 
 @router.get("/current_weather", response_class=HTMLResponse)
@@ -70,55 +64,6 @@ async def get_weather(request: Request, city: str, db: Session = Depends(databas
         "error": None
     })
 
-    # return templates.TemplateResponse("weather_details.html", {
-    #     "request": request,
-    #     "city": city,
-    #     "weather": weather_data,
-    #     "error": None
-    # })
-
-    # async with httpx.AsyncClient() as client:
-    #     user = await get_current_user(request)
-    #     if user is None:
-    #         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
-    #     # bh
-    #     response = await client.get(f"http://127.0.0.1:8000/weather/current_weather/{city}")
-    #
-    #     if response.status_code == 404:
-    #         weather = None
-    #         error = "City not found"
-    #     elif response.status_code == 200:
-    #         weather = response.json()
-    #         error = None
-    #     else:
-    #         weather = None
-    #         error = "Failed to fetch weather data"
-    #
-    # return templates.TemplateResponse("weather_details.html", {
-    #     "request": request,
-    #     "city": city,
-    #     "weather": weather,
-    #     "error": error
-    # })
-
-# @router.get("/current_weather/{city}", response_model=schemas.WeatherData)
-# async def get_weather(city: str, db: Session = Depends(database.get_db),
-#                       user=Depends(get_current_user)):
-#     print("!!!!! user",user)
-#     if user is None:
-#         return HTTPException(status_code=403, detail="Not authorized")
-#
-#     lat, lon = await crud.get_coordinates(city)
-#     if lat is None or lon is None:
-#         raise HTTPException(status_code=404, detail="City not found")
-#
-#     weather_data = await crud.get_current_weather(lat, lon)
-#     # print(weather_data)
-#     if weather_data is None:
-#         raise HTTPException(status_code=404, detail="Weather data not found")
-#
-#     return weather_data
-
 
 class CustomApiException(HTTPException):
     def __init__(self):
@@ -127,7 +72,7 @@ class CustomApiException(HTTPException):
 
 @router.post("/favorite_city/", response_class=RedirectResponse)
 async def add_favorite_city(city: schemas.FavoriteLocationBase, db: Session = Depends(database.get_db),
-                             user=Depends(get_current_user)):
+                            user=Depends(get_current_user)):
     """
     Add a city to the user's favorite locations.
     """
@@ -150,6 +95,7 @@ async def add_favorite_city(city: schemas.FavoriteLocationBase, db: Session = De
                                   latitude=latitude, longitude=longitude)
 
     return RedirectResponse(url="/weather/", status_code=status.HTTP_302_FOUND)
+
 
 @router.post("/favorite_city/{city_name}/delete", response_class=RedirectResponse)
 def delete_favorite_city(city_name: str, db: Session = Depends(database.get_db), user=Depends(get_current_user)):
@@ -176,27 +122,6 @@ def delete_favorite_city(city_name: str, db: Session = Depends(database.get_db),
 
     # Redirect back to the main page after deletion
     return RedirectResponse(url="/weather", status_code=status.HTTP_302_FOUND)
-
-
-# @router.delete("/favorite_city/{city_name}", response_model=schemas.FavoriteLocation)
-# def delete_favorite_city(city_name: str, db: Session = Depends(database.get_db), user=Depends(get_current_user)):
-#     if user is None:
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-#
-#     # Check if the city exists in the user's favorite locations
-#     favorite_location = db.query(models.FavoriteLocation).filter(
-#         models.FavoriteLocation.name == city_name,
-#         models.FavoriteLocation.owner_id == user.get("id")
-#     ).first()
-#
-#     if not favorite_location:
-#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="City not found in favorite locations")
-#
-#     # Delete the city from favorite locations
-#     db.delete(favorite_location)
-#     db.commit()
-#
-#     return favorite_location
 
 
 @router.post("/send-welcome-email/")
@@ -256,7 +181,6 @@ async def get_rain_forecast(city: str):
     lat, lon = await crud.get_coordinates(city)
     forecast_data = await crud.get_5_day_forecast(lat, lon)
 
-
     if forecast_data:
         will_rain, total_rain_volume, rain_period = crud.will_it_rain_today(forecast_data)
         return {
@@ -268,9 +192,6 @@ async def get_rain_forecast(city: str):
         }
     else:
         return {"error": "Failed to retrieve weather data."}
-
-
-
 
 
 @router.post("/check-extreme-weather/")

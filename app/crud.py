@@ -234,11 +234,10 @@ def will_it_rain_today(forecast_data):
     formatted_rain_periods = []
     for start, end in combined_rain_periods:
         formatted_rain_periods.append(f"{start.strftime('%I:%M %p')} ({categorize_time(start)}) - "
-                                       f"{end.strftime('%I:%M %p')} ({categorize_time(end)})")
+                                      f"{end.strftime('%I:%M %p')} ({categorize_time(end)})")
 
     total_rain_volume = round(total_rain_volume, 1)  # Round rain volume to 1 decimal
     return rain_today, total_rain_volume, formatted_rain_periods
-
 
 
 async def check_severe_weather(lat: float, lon: float):
@@ -251,22 +250,6 @@ async def check_severe_weather(lat: float, lon: float):
             return weather_data
 
     return None
-
-
-# async def send_severe_weather_alert(user: models.Users, weather_data: schemas.WeatherData):
-#     subject = "Severe Weather Alert!"
-#     body = (
-#         f"Dear {user.username},\n\n"
-#         f"Severe weather conditions are expected in {weather_data.city}.\n\n"
-#         f"Weather: {weather_data.weather_description}\n"
-#         f"Temperature: {weather_data.temperature}°C\n"
-#         f"Humidity: {weather_data.humidity}%\n"
-#         f"Wind Speed: {weather_data.wind_speed} m/s\n\n"
-#         f"Please take necessary precautions.\n\n"
-#         f"Best Regards,\nThe Weather App Team"
-#     )
-#
-#     send_email(subject, body, user.email)
 
 
 async def send_severe_weather_alert(user: models.Users, alert, city):

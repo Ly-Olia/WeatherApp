@@ -1,9 +1,11 @@
 from pydantic import BaseModel
 
+
 class WeatherDataBase(BaseModel):
     city: str
     temperature: float
     condition: str
+
 
 class WeatherDataCreate(WeatherDataBase):
     pass
@@ -19,9 +21,9 @@ class WeatherData(BaseModel):
     weather_description: str
     wind_speed: float
 
-
     class Config:
         from_attributes = True
+
 
 class UserBase(BaseModel):
     email: str
@@ -29,8 +31,10 @@ class UserBase(BaseModel):
     first_name: str
     last_name: str
 
+
 class UserCreate(UserBase):
     hashed_password: str
+
 
 class User(UserBase):
     id: int
@@ -38,6 +42,7 @@ class User(UserBase):
 
     class Config:
         from_attributes = True
+
 
 class Login(BaseModel):
     email: str
@@ -47,8 +52,10 @@ class Login(BaseModel):
 class FavoriteLocationBase(BaseModel):
     name: str
 
+
 class FavoriteLocationCreate(FavoriteLocationBase):
     pass
+
 
 class FavoriteLocation(FavoriteLocationBase):
     id: int

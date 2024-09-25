@@ -26,43 +26,6 @@ async def root():
     return RedirectResponse(url="/weather", status_code=status.HTTP_302_FOUND)
 
 
-
-# def main():
-# db = SessionLocal()
-# try:
-#     user_id = 6  # User ID for which we are sending the weather updates
-#     db_user = get_user(db, user_id=user_id)
-#     favorite_locations = get_favorite_locations(db, user_id)
-#
-#     if not favorite_locations:
-#         raise Exception(f"No favorite locations found for user ID {user_id}")
-#
-#     weather_info = []
-#     for location in favorite_locations:
-#         weather_data = fetch_weather_data(float(location.latitude), float(location.longitude))
-#         weather_info.append({
-#             "location": location.name,
-#             "weather": weather_data
-#         })
-#
-#     # Compose the email body with weather information
-#     body = f"Hi {db_user.username},\n\nHere is the current weather for your favorite locations:\n\n"
-#     for info in weather_info:
-#         body += f"Location: {info['location']}\n"
-#         body += f"Weather: {info['weather']['description']}\n"
-#         body += f"Temperature: {info['weather']['temperature']}°C\n"
-#         body += f"Humidity: {info['weather']['humidity']}%\n\n"
-#     body += "Best Regards,\nThe Weather Assistant Team"
-#     subject = f"Weather Update for - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-#     # Send the email
-#     send_email(subject, body, db_user.email)
-#
-#     print(f"Weather email sent successfully for {db_user.email} at {datetime.now()}")
-# except Exception as e:
-#     print(f"Failed to send weather email: {e}")
-# finally:
-#     db.close()
-
 async def main():
     lat, lon = await get_coordinates("Eindhoven")  # Longitude for Eindhoven
     api_key = settings.API_KEY
