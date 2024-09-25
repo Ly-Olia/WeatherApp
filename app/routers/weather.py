@@ -142,7 +142,7 @@ async def add_favorite_city(city: schemas.FavoriteLocationBase, db: Session = De
 
     try:
         latitude, longitude = await crud.get_coordinates(city.name)
-    except HTTPException as e:
+    except HTTPException:
         error_message = f"City not found: {city.name}"
         return RedirectResponse(url=f"/weather/?error_favorite={error_message}", status_code=status.HTTP_302_FOUND)
 
