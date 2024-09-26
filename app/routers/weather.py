@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.responses import RedirectResponse
 from app import schemas, models, database, crud
 
-from app.email_utils import send_email
+from app.email_utils import send_email, check_alerts
 from app.routers.auth import get_current_user
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
@@ -208,14 +208,37 @@ async def check_and_send_alerts(city: str, db: Session = Depends(database.get_db
         return weather_data
 
 
-@router.post("/check-severe-weather/")
-async def check_and_send_alerts(db: Session = Depends(database.get_db)):
-    users = crud.get_all_users(db)
+@router.post("/send-severe-weather-alert/")
+async def check_and_send_alerts(
+        request: Request,
+        city: str = Form(...),  # Use Form to get 'city' from POST data
+        db: Session = Depends(database.get_db)
+):
+    """
+    Check for severe weather in the user's favorite cities and send an alert via email.
+    """
+    user = await get_current_user(request)
+    if user is None:
+        return RedirectResponse(url="/auth", status_code=302)
 
-    for user in users:
-        favorite_locations = crud.get_favorite_locations(db, user_id=user.id)
+    lat, lon = await crud.get_coordinates(city)
+    severe_weather = await crud.check_extreme_weather(lat, lon)
 
-        for location in favorite_locations:
-            severe_weather = await crud.check_severe_weather(location.latitude, location.longitude)
-            if severe_weather:
-                await crud.send_severe_weather_alert(user, severe_weather)
+    if severe_weather.get('severe_weather'):
+        alerts = severe_weather.get("alerts")
+        alert_message = "\n".join(alerts)
+
+        subject = f"Severe Weather Alert for {city}!"
+        body = (
+            f"Dear {user['username']},\n\n"
+            f"Severe weather conditions are expected in {city}.\n"
+            f"Details:\n{alert_message}\n\n"
+            f"Please stay safe and take precautions.\n\n"
+            f"Best regards,\nThe Weather App Team"
+        )
+        # Send the email
+        check_alerts(user.get('id'), db, subject, body)
+
+        return {"message": f"Severe weather alert sent to {user.get('username')}"}
+
+    return {"message": "No severe weather detected."}

@@ -32,6 +32,13 @@
             {% for city in favorite_cities %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <a href="/weather/current_weather?city={{ city.name }}">{{ city.name }}</a>
+
+                <!-- Add a button to trigger the weather alert for each city -->
+                <form method="POST" action="/weather/send-severe-weather-alert/">
+                    <input type="hidden" name="city" value="{{ city.name }}">
+                    <button type="submit" class="btn btn-warning btn-sm">Send Weather Alert</button>
+                </form>
+
                 <form method="POST" action="/weather/favorite_city/{{ city.name }}/delete" style="display:inline;">
                     <button class="btn btn-danger btn-sm">Remove</button>
                 </form>
@@ -43,6 +50,8 @@
         {% endif %}
 
         <hr>
+
+
 
         <h2>Add a New Favorite City</h2>
         {% if request.query_params.get('error_favorite') %}

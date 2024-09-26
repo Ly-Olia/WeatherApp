@@ -20,6 +20,7 @@ class Users(Base):
     last_name = Column(String)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
+    auto_check_enabled = Column(Boolean, default=False)
 
     favorite_locations = relationship("FavoriteLocation", back_populates="owner")
 

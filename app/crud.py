@@ -6,10 +6,8 @@ import requests
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import models, schemas
+from . import models, schemas, email_utils
 from .config import settings
-from .email_utils import send_email
-from .models import Users, FavoriteLocation
 
 
 def get_weather_data(db: Session, city: str, country: str) -> Optional[models.WeatherData]:
@@ -56,14 +54,14 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.Users:
     return db_user
 
 
-def get_all_users(db: Session) -> list[Type[Users]]:
+def get_all_users(db: Session) -> list[Type[models.Users]]:
     """
     Retrieve a list of all users from the database.
     """
     return db.query(models.Users).all()
 
 
-def get_favorite_locations(db: Session, user_id: int) -> list[Type[FavoriteLocation]]:
+def get_favorite_locations(db: Session, user_id: int) -> list[Type[models.FavoriteLocation]]:
     """
     Retrieve a list of favorite locations for a given user.
     """
@@ -276,37 +274,6 @@ def will_it_rain_today(forecast_data: Dict) -> Tuple[bool, float, List[str]]:
     return rain_today, total_rain_volume, formatted_rain_periods
 
 
-async def check_severe_weather(lat: float, lon: float):
-    """
-    Check if severe weather conditions are present at the given latitude and longitude.
-    """
-    weather_data = await get_current_weather(lat, lon)
-
-    severe_conditions = ["Thunderstorm", "Rain", "Snow", "Extreme"]
-
-    for condition in severe_conditions:
-        if condition.lower() in weather_data.condition.lower():
-            return weather_data
-
-    return None
-
-
-# async def send_severe_weather_alert(user: models.Users, weather_data: schemas.WeatherData):
-#     subject = "Severe Weather Alert!"
-#     body = (
-#         f"Dear {user.username},\n\n"
-#         f"Severe weather conditions are expected in {weather_data.city}.\n\n"
-#         f"Weather: {weather_data.weather_description}\n"
-#         f"Temperature: {weather_data.temperature}°C\n"
-#         f"Humidity: {weather_data.humidity}%\n"
-#         f"Wind Speed: {weather_data.wind_speed} m/s\n\n"
-#         f"Please take necessary precautions.\n\n"
-#         f"Best Regards,\nThe Weather App Team"
-#     )
-#
-#     send_email(subject, body, user.email)
-
-
 async def send_severe_weather_alert(user: models.Users, alert, city):
     """
     Send an email alert about severe weather conditions.
@@ -319,7 +286,7 @@ async def send_severe_weather_alert(user: models.Users, alert, city):
         f"\nBest Regards,\nThe Weather App Team"
     )
     subject = f"Severe Weather Alert in {city}!"
-    send_email(subject, message, user.email)
+    email_utils.send_email(subject, message, user.email)
 
 
 async def check_extreme_weather(lat: float, lon: float) -> dict:
@@ -355,12 +322,11 @@ async def check_extreme_weather(lat: float, lon: float) -> dict:
     if alerts:
         return {
             "severe_weather": True,
-            "weather_data": weather_data,  # Include weather_data in the return
+            "weather_data": weather_data,
             "alerts": alerts,
         }
     else:
         return {
             "severe_weather": False,
-            "weather_data": weather_data,  # Include weather_data in the return
             "alerts": [],
         }

@@ -1,8 +1,25 @@
+# app/email_utils.py
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from .config import settings
+from email.mime.text import MIMEText
 
+from sqlalchemy.orm import Session
+
+from app import crud
+from app.config import settings
+def check_alerts(user_id: int, db: Session, subject: str, body: str):
+    """
+    Check user data and send weather alert email.
+    """
+    # Fetch the user using the get_user function
+    user = crud.get_user(db, user_id)
+
+    if user is None:
+        print(f"User with ID {user_id} not found.")
+        return
+
+    # Send the email
+    send_email(subject, body, user.email)
 
 def send_email(subject: str, body: str, to_email: str) -> None:
     """

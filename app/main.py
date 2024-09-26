@@ -1,4 +1,7 @@
+# app/main.py
+
 from fastapi import FastAPI
+
 from app import database, models
 from app.routers import users, weather, auth
 from starlette.staticfiles import StaticFiles
