@@ -312,7 +312,7 @@ async def check_extreme_weather(lat: float, lon: float) -> dict:
             alerts.append(severe_conditions[weather_data.condition])
 
         # Check for extreme temperature
-    if weather_data.temperature > 35 or weather_data.temperature < -10:
+    if weather_data.temperature > 0 or weather_data.temperature < -10:
         alerts.append(severe_conditions["Extreme Temperature"])
 
         # Check for high wind speeds

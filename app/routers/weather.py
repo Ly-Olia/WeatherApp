@@ -26,11 +26,12 @@ async def weather_main_page(request: Request, db: Session = Depends(database.get
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
     favorite_cities = crud.get_favorite_locations(db, user_id=user.get("id"))
+    db_user = crud.get_user(db, user.get("id"))
 
     return templates.TemplateResponse("main_page.html", {
         "request": request,
         "favorite_cities": favorite_cities,
-        "user": user
+        "user": db_user
     })
 
 
@@ -242,3 +243,23 @@ async def check_and_send_alerts(
         return {"message": f"Severe weather alert sent to {user.get('username')}"}
 
     return {"message": "No severe weather detected."}
+
+
+@router.post("/toggle-auto-check")
+async def toggle_auto_check(
+    db: Session = Depends(database.get_db),
+    current_user: models.Users = Depends(get_current_user)
+):
+    """
+    Toggle the auto_check_enabled flag for the current user.
+    """
+    try:
+        user = current_user
+        user = crud.get_user(db, user.get('id'))
+        user.auto_check_enabled = not user.auto_check_enabled
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return RedirectResponse(url="/weather/", status_code=status.HTTP_302_FOUND)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error toggling auto-check: {str(e)}")

@@ -1,110 +1,128 @@
 {% include 'layout.html' %}
 
-    <div class="container">
-        <h1 class="mt-4">Welcome to the Weather App</h1>
-        <p>Get current weather information and manage your favorite cities.</p>
+<div class="container mt-5">
+    <h1 class="mb-4">Welcome to the Weather App</h1>
+    <p>Get current weather information and manage your favorite cities.</p>
 
-        {% if request.query_params.get('error') %}
-            <div class="alert alert-danger">
-                {{ request.query_params.get('error') }}
+    <!-- Error message for weather query -->
+    {% if request.query_params.get('error') %}
+        <div class="alert alert-danger">
+            {{ request.query_params.get('error') }}
+        </div>
+    {% endif %}
+
+    <!-- Weather search form -->
+    <h2>Check Weather</h2>
+    <form method="GET" action="/weather/current_weather" class="mb-4">
+        <div class="form-row">
+            <div class="form-group col-md-8">
+                <label for="city">Enter City</label>
+                <input type="text" class="form-control" id="city" name="city" placeholder="City name" required>
             </div>
-        {% endif %}
-
-        <h1>Check Weather</h1>
-        <form method="GET" action="/weather/current_weather">
-            <div class="form-row">
-                <div class="form-group col-md-8">
-                    <label for="city">Enter City</label>
-                    <input type="text" class="form-control" id="city" name="city" placeholder="City name" required>
-                </div>
-                <div class="form-group col-md-4">
-                    <button type="submit" class="btn btn-primary">Get Weather</button>
-                </div>
+            <div class="form-group col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Get Weather</button>
             </div>
-        </form>
+        </div>
+    </form>
 
-        <hr>
+    <hr>
 
-        <h2>Your Favorite Cities</h2>
+    <!-- Favorite cities section -->
+    <h2>Your Favorite Cities</h2>
 
-        {% if favorite_cities %}
-        <ul class="list-group">
-            {% for city in favorite_cities %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <a href="/weather/current_weather?city={{ city.name }}">{{ city.name }}</a>
+    {% if favorite_cities %}
+    <ul class="list-group mb-4">
+        {% for city in favorite_cities %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="/weather/current_weather?city={{ city.name }}" class="text-dark font-weight-bold h5">
+                {{ city.name }}
+            </a>
 
-                <!-- Add a button to trigger the weather alert for each city -->
-                <form method="POST" action="/weather/send-severe-weather-alert/">
+            <div class="btn-group">
+                <!-- Weather alert button -->
+                <form method="POST" action="/weather/send-severe-weather-alert/" class="mr-2">
                     <input type="hidden" name="city" value="{{ city.name }}">
                     <button type="submit" class="btn btn-warning btn-sm">Send Weather Alert</button>
                 </form>
 
-                <form method="POST" action="/weather/favorite_city/{{ city.name }}/delete" style="display:inline;">
+                <!-- Remove city button -->
+                <form method="POST" action="/weather/favorite_city/{{ city.name }}/delete">
                     <button class="btn btn-danger btn-sm">Remove</button>
                 </form>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p>You don't have any favorite cities yet. Add some!</p>
-        {% endif %}
-
-        <hr>
-
-
-
-        <h2>Add a New Favorite City</h2>
-        {% if request.query_params.get('error_favorite') %}
-            <div class="alert alert-danger">
-                {{ request.query_params.get('error_favorite') }}
             </div>
-        {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
 
-        <form id="addFavoriteCityForm">
-            <div class="form-row">
-                <div class="form-group col-md-8">
-                    <label for="new_city">City Name</label>
-                    <input type="text" class="form-control" id="new_city" name="city" placeholder="City name" required>
-                </div>
-                <div class="form-group col-md-4">
-                    <button type="button" class="btn btn-success mt-4" onclick="submitForm()">Add to Favorites</button>
-                </div>
+    <!-- Toggle auto-check button with reversed conditional styling -->
+    <form method="POST" action="/weather/toggle-auto-check" class="mb-4">
+        <button type="submit" class="btn {% if user.auto_check_enabled %}btn-danger{% else %}btn-success{% endif %}">
+            {% if user.auto_check_enabled %}
+                Turn Off Auto-Check
+            {% else %}
+                Turn On Auto-Check
+            {% endif %}
+        </button>
+    </form>
+
+    {% else %}
+    <p>You don't have any favorite cities yet. Add some!</p>
+    {% endif %}
+
+    <hr>
+
+    <!-- Add new favorite city form -->
+    <h2>Add a New Favorite City</h2>
+    {% if request.query_params.get('error_favorite') %}
+        <div class="alert alert-danger">
+            {{ request.query_params.get('error_favorite') }}
+        </div>
+    {% endif %}
+
+    <form id="addFavoriteCityForm" class="mb-4">
+        <div class="form-row">
+            <div class="form-group col-md-8">
+                <label for="new_city">City Name</label>
+                <input type="text" class="form-control" id="new_city" name="city" placeholder="City name" required>
             </div>
-        </form>
+            <div class="form-group col-md-4 d-flex align-items-end">
+                <button type="button" class="btn btn-success w-100" onclick="submitForm()">Add to Favorites</button>
+            </div>
+        </div>
+    </form>
 
+    <!-- Error message placeholder -->
+    <div id="error-message" class="alert alert-danger mt-3" style="display: none;"></div>
 
-        <script>
-        function submitForm() {
-            const city = document.getElementById('new_city').value;
+    <!-- Script to handle adding favorite city via AJAX -->
+    <script>
+    function submitForm() {
+        const city = document.getElementById('new_city').value;
 
-            fetch('/weather/favorite_city/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name: city }),
-            })
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url;
-                } else {
-                    return response.json();
-                }
-            })
-            .then(data => {
-                if (data && data.error) {
-                    // Display error message
-                    alert(data.error);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
-        </script>
+        fetch('/weather/favorite_city/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: city }),
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.json();
+            }
+        })
+        .then(data => {
+            if (data && data.error) {
+                // Display error message
+                alert(data.error);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    </script>
 
-<!--        </div>-->
-<!--           <div id="error-message" class="alert alert-danger mt-3" style="display: none;"></div>-->
-<!--        </div>-->
-
-
-        <script src="{{ url_for('static', path='js/bootstrap.js') }}"></script>
-    </div>
+    <!-- Bootstrap JS -->
+    <script src="{{ url_for('static', path='js/bootstrap.js') }}"></script>
+</div>
