@@ -6,7 +6,7 @@ import requests
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import models, schemas, email_utils
+from . import models, schemas
 from .config import settings
 
 
@@ -59,6 +59,12 @@ def get_all_users(db: Session) -> list[Type[models.Users]]:
     Retrieve a list of all users from the database.
     """
     return db.query(models.Users).all()
+
+
+# In your crud.py file
+def get_users_with_auto_check_enabled(db: Session):
+    return db.query(models.Users).filter(models.Users.auto_check_enabled == True).all()
+
 
 
 def get_favorite_locations(db: Session, user_id: int) -> list[Type[models.FavoriteLocation]]:
@@ -274,19 +280,19 @@ def will_it_rain_today(forecast_data: Dict) -> Tuple[bool, float, List[str]]:
     return rain_today, total_rain_volume, formatted_rain_periods
 
 
-async def send_severe_weather_alert(user: models.Users, alert, city):
-    """
-    Send an email alert about severe weather conditions.
-    """
-
-    alert_str = "\n".join(alert)
-    message = (
-        f"Severe weather conditions are expected in {city}.\n\n"
-        f"Details: {alert_str}\n"
-        f"\nBest Regards,\nThe Weather App Team"
-    )
-    subject = f"Severe Weather Alert in {city}!"
-    email_utils.send_email(subject, message, user.email)
+# async def send_severe_weather_alert(user: models.Users, alert, city):
+#     """
+#     Send an email alert about severe weather conditions.
+#     """
+#
+#     alert_str = "\n".join(alert)
+#     message = (
+#         f"Severe weather conditions are expected in {city}.\n\n"
+#         f"Details: {alert_str}\n"
+#         f"\nBest Regards,\nThe Weather App Team"
+#     )
+#     subject = f"Severe Weather Alert in {city}!"
+#     email_utils.send_email(subject, message, user.email)
 
 
 async def check_extreme_weather(lat: float, lon: float) -> dict:
@@ -312,7 +318,7 @@ async def check_extreme_weather(lat: float, lon: float) -> dict:
             alerts.append(severe_conditions[weather_data.condition])
 
         # Check for extreme temperature
-    if weather_data.temperature > 0 or weather_data.temperature < -10:
+    if weather_data.temperature > 15 or weather_data.temperature < -10:
         alerts.append(severe_conditions["Extreme Temperature"])
 
         # Check for high wind speeds

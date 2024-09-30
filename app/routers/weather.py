@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.responses import RedirectResponse
-from app import schemas, models, database, crud
+from app import schemas, models, database, crud, email_utils
 
 from app.email_utils import send_email, check_alerts
 from app.routers.auth import get_current_user
@@ -191,22 +191,22 @@ async def get_rain_forecast(city: str):
     else:
         return {"error": "Failed to retrieve weather data."}
 
-
-@router.post("/check-extreme-weather/")
-async def check_and_send_alerts(city: str, db: Session = Depends(database.get_db)):
-    lat, lon = await crud.get_coordinates(city)
-    severe_weather = await crud.check_extreme_weather(lat, lon)
-    # print(severe_weather.get("alerts"))
-    user = crud.get_user(db, 6)
-    weather_data = await crud.get_current_weather(lat, lon)
-    if severe_weather.get('severe_weather'):
-        # for alert in severe_weather.get("alerts", []):  # Iterate over the list
-        # print(alert)
-        await crud.send_severe_weather_alert(user, severe_weather.get("alerts"), city)
-        return {"Message send": weather_data}
-    else:
-
-        return weather_data
+#
+# @router.post("/check-extreme-weather/")
+# async def check_and_send_alerts(city: str, db: Session = Depends(database.get_db)):
+#     lat, lon = await crud.get_coordinates(city)
+#     severe_weather = await crud.check_extreme_weather(lat, lon)
+#     # print(severe_weather.get("alerts"))
+#     user = crud.get_user(db, 6)
+#     weather_data = await crud.get_current_weather(lat, lon)
+#     if severe_weather.get('severe_weather'):
+#         # for alert in severe_weather.get("alerts", []):  # Iterate over the list
+#         # print(alert)
+#         await crud.send_severe_weather_alert(user, severe_weather.get("alerts"), city)
+#         return {"Message send": weather_data}
+#     else:
+#
+#         return weather_data
 
 
 @router.post("/send-severe-weather-alert/")
@@ -263,3 +263,15 @@ async def toggle_auto_check(
         return RedirectResponse(url="/weather/", status_code=status.HTTP_302_FOUND)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error toggling auto-check: {str(e)}")
+
+
+@router.post("/check-all-alerts")
+async def check_all_weather_alerts(db: Session = Depends(database.get_db)):
+    """
+    Trigger the function to check weather alerts for all users and send emails if needed.
+    """
+    try:
+        await email_utils.check_all_users_weather_alerts(db)
+        return {"message": "Weather alerts checked and emails sent if needed."}
+    except Exception as e:
+        return {"error": str(e)}
