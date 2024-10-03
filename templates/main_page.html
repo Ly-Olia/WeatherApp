@@ -1,8 +1,8 @@
 {% include 'layout.html' %}
 
 <div class="container mt-5">
-    <h1 class="mb-4">Welcome to the Weather App</h1>
-    <p>Get current weather information and manage your favorite cities.</p>
+    <h1 class="mb-4 text-center">Welcome to the Weather App</h1>
+    <p class="text-center mb-4">Get current weather information and manage your favorite cities.</p>
 
     <!-- Error message for weather query -->
     {% if request.query_params.get('error') %}
@@ -12,7 +12,7 @@
     {% endif %}
 
     <!-- Weather search form -->
-    <h2>Check Weather</h2>
+    <h2 class="mt-4">Check Weather</h2>
     <form method="GET" action="/weather/current_weather" class="mb-4">
         <div class="form-row">
             <div class="form-group col-md-8">
@@ -39,13 +39,18 @@
             </a>
 
             <div class="btn-group">
-                <!-- Weather alert button -->
-                <form method="POST" action="/weather/send-severe-weather-alert/" class="mr-2">
-                    <input type="hidden" name="city" value="{{ city.name }}">
-                    <button type="submit" class="btn btn-warning btn-sm">Send Weather Alert</button>
+                {% if user.auto_check_enabled %}
+                <form method="POST" action="/weather/favorite_city/{{ city.id }}/toggle_alert" class="mr-2">
+                    <button type="submit" class="btn {% if city.send_alert %}btn-success{% else %}btn-secondary{% endif %} btn-sm">
+                        {% if city.send_alert %}
+                            Alerts On
+                        {% else %}
+                            Alerts Off
+                        {% endif %}
+                    </button>
                 </form>
+                {% endif %}
 
-                <!-- Remove city button -->
                 <form method="POST" action="/weather/favorite_city/{{ city.name }}/delete">
                     <button class="btn btn-danger btn-sm">Remove</button>
                 </form>
@@ -54,9 +59,9 @@
         {% endfor %}
     </ul>
 
-    <!-- Toggle auto-check button with reversed conditional styling -->
+    <!-- Toggle auto-check button -->
     <form method="POST" action="/weather/toggle-auto-check" class="mb-4">
-        <button type="submit" class="btn {% if user.auto_check_enabled %}btn-danger{% else %}btn-success{% endif %}">
+        <button type="submit" class="btn {% if user.auto_check_enabled %}btn-danger{% else %}btn-success{% endif %} w-100">
             {% if user.auto_check_enabled %}
                 Turn Off Auto-Check
             {% else %}
@@ -66,7 +71,9 @@
     </form>
 
     {% else %}
-    <p>You don't have any favorite cities yet. Add some!</p>
+    <div class="alert alert-warning">
+        You don't have any favorite cities yet. Add some!
+    </div>
     {% endif %}
 
     <hr>

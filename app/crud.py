@@ -66,12 +66,17 @@ def get_users_with_auto_check_enabled(db: Session):
     return db.query(models.Users).filter(models.Users.auto_check_enabled == True).all()
 
 
+# def get_favorite_locations(db: Session, user_id: int) -> list[Type[models.FavoriteLocation]]:
+#     """
+#     Retrieve a list of favorite locations for a given user.
+#     """
+#     return db.query(models.FavoriteLocation).filter(models.FavoriteLocation.owner_id == user_id).all()
 
-def get_favorite_locations(db: Session, user_id: int) -> list[Type[models.FavoriteLocation]]:
-    """
-    Retrieve a list of favorite locations for a given user.
-    """
-    return db.query(models.FavoriteLocation).filter(models.FavoriteLocation.owner_id == user_id).all()
+def get_favorite_locations(db: Session, user_id: int, send_alert: bool = None) -> list[Type[models.FavoriteLocation]]:
+    query = db.query(models.FavoriteLocation).filter(models.FavoriteLocation.owner_id == user_id)
+    if send_alert is not None:
+        query = query.filter(models.FavoriteLocation.send_alert == send_alert)
+    return query.all()
 
 
 async def get_coordinates(city: str, state: Optional[str] = None, country: Optional[str] = None) -> Tuple[float, float]:

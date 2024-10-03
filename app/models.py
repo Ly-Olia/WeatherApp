@@ -36,6 +36,7 @@ class FavoriteLocation(Base):
     name = Column(String, index=True)
     latitude = Column(String)
     longitude = Column(String)
+    send_alert = Column(Boolean, default=False)
 
     owner_id = Column(Integer, ForeignKey('users.id'))
     owner = relationship("Users", back_populates="favorite_locations")

@@ -53,7 +53,7 @@ async def check_all_users_weather_alerts(db: Session):
 
     # Iterate over each user
     for user in users:
-        favorite_locations = crud.get_favorite_locations(db, user_id=user.id)
+        favorite_locations = crud.get_favorite_locations(db, user_id=user.id, send_alert=True)
 
         # Iterate over each favorite location for the user
         for location in favorite_locations:

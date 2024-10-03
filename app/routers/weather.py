@@ -275,3 +275,21 @@ async def check_all_weather_alerts(db: Session = Depends(database.get_db)):
         return {"message": "Weather alerts checked and emails sent if needed."}
     except Exception as e:
         return {"error": str(e)}
+
+
+@router.post("/favorite_city/{city_id}/toggle_alert")
+def toggle_send_alert(city_id: int, db: Session = Depends(database.get_db), current_user: models.Users = Depends(get_current_user)):
+    # Get the favorite location by ID and ensure it belongs to the current user
+    favorite_location = db.query(models.FavoriteLocation).filter(
+        models.FavoriteLocation.id == city_id,
+        models.FavoriteLocation.owner_id == current_user.get('id')
+    ).first()
+
+    if not favorite_location:
+        raise HTTPException(status_code=404, detail="Favorite city not found")
+
+    # Toggle the send_alert value
+    favorite_location.send_alert = not favorite_location.send_alert
+    db.commit()
+
+    return RedirectResponse(url="/weather/", status_code=status.HTTP_302_FOUND)
