@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.responses import RedirectResponse
-from app import schemas, models, database, crud, email_utils
+from app import schemas, models, database, crud
 
-from app.email_utils import send_email, check_alerts
+from app.email_utils import check_alerts
 from app.routers.auth import get_current_user
 from starlette.responses import HTMLResponse
 from starlette.templating import Jinja2Templates
@@ -64,7 +64,7 @@ async def get_weather(request: Request, city: str,
         "weather": weather_data,
         "will_rain": will_rain,
         "rain_volume": total_rain_volume,
-        "rain_times": rain_times,  # Pass rain times here
+        "rain_times": rain_times,
         "error": None
     })
 
@@ -122,60 +122,11 @@ def delete_favorite_city(city_name: str, db: Session = Depends(database.get_db),
     return RedirectResponse(url="/weather", status_code=status.HTTP_302_FOUND)
 
 
-@router.post("/send-welcome-email/")
-def send_welcome_email(db: Session = Depends(database.get_db), user=Depends(get_current_user)):
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-
-    db_user = crud.get_user(db, user_id=user.get("id"))
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    subject = "Welcome to Our Service!"
-    body = f"Hi {user.get("username")},\n\nWelcome to our service! We are glad to have you.\n\nBest Regards,\nThe Team"
-    send_email(subject, body, db_user.email)
-    return {"message": "Welcome email sent", "email": db_user.email}
-
-
-@router.post("/send-current-weather/")
-def send_current_weather(db: Session = Depends(database.get_db), user: models.Users = Depends(get_current_user)):
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-
-    db_user = crud.get_user(db, user_id=user.get("id"))
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Fetch user's favorite locations
-    favorite_locations = crud.get_favorite_locations(db, user_id=db_user.id)
-    if not favorite_locations:
-        raise HTTPException(status_code=404, detail="No favorite locations found for the user")
-
-    # Fetch weather data for each favorite location
-    weather_info = []
-    for location in favorite_locations:
-        weather_data = crud.fetch_weather_data(float(location.latitude), float(location.longitude))
-        weather_info.append({
-            "location": location.name,
-            "weather": weather_data
-        })
-
-    # Compose the email body with weather information
-    body = f"Hi {db_user.username},\n\nHere is the current weather for your favorite locations:\n\n"
-    for info in weather_info:
-        body += f"Location: {info['location']}\n"
-        body += f"Weather: {info['weather']['description']}\n"
-        body += f"Temperature: {info['weather']['temperature']}°C\n"
-        body += f"Humidity: {info['weather']['humidity']}%\n\n"
-    body += "Best Regards,\nThe Weather Assistant Team"
-
-    # Send the email
-    send_email("Your Favorite Locations' Weather Update", body, db_user.email)
-    return {"message": "Weather email sent", "email": db_user.email}
-
-
 @router.get("/rain-forecast/{city}")
 async def get_rain_forecast(city: str):
+    """
+    Get rain forecast for the specified city.
+    """
     lat, lon = await crud.get_coordinates(city)
     forecast_data = await crud.get_5_day_forecast(lat, lon)
 
@@ -191,28 +142,11 @@ async def get_rain_forecast(city: str):
     else:
         return {"error": "Failed to retrieve weather data."}
 
-#
-# @router.post("/check-extreme-weather/")
-# async def check_and_send_alerts(city: str, db: Session = Depends(database.get_db)):
-#     lat, lon = await crud.get_coordinates(city)
-#     severe_weather = await crud.check_extreme_weather(lat, lon)
-#     # print(severe_weather.get("alerts"))
-#     user = crud.get_user(db, 6)
-#     weather_data = await crud.get_current_weather(lat, lon)
-#     if severe_weather.get('severe_weather'):
-#         # for alert in severe_weather.get("alerts", []):  # Iterate over the list
-#         # print(alert)
-#         await crud.send_severe_weather_alert(user, severe_weather.get("alerts"), city)
-#         return {"Message send": weather_data}
-#     else:
-#
-#         return weather_data
-
 
 @router.post("/send-severe-weather-alert/")
 async def check_and_send_alerts(
         request: Request,
-        city: str = Form(...),  # Use Form to get 'city' from POST data
+        city: str = Form(...),
         db: Session = Depends(database.get_db)
 ):
     """
@@ -247,8 +181,8 @@ async def check_and_send_alerts(
 
 @router.post("/toggle-auto-check")
 async def toggle_auto_check(
-    db: Session = Depends(database.get_db),
-    current_user: models.Users = Depends(get_current_user)
+        db: Session = Depends(database.get_db),
+        current_user: models.Users = Depends(get_current_user)
 ):
     """
     Toggle the auto_check_enabled flag for the current user.
@@ -265,20 +199,12 @@ async def toggle_auto_check(
         raise HTTPException(status_code=500, detail=f"Error toggling auto-check: {str(e)}")
 
 
-@router.post("/check-all-alerts")
-async def check_all_weather_alerts(db: Session = Depends(database.get_db)):
-    """
-    Trigger the function to check weather alerts for all users and send emails if needed.
-    """
-    try:
-        await email_utils.check_all_users_weather_alerts(db)
-        return {"message": "Weather alerts checked and emails sent if needed."}
-    except Exception as e:
-        return {"error": str(e)}
-
-
 @router.post("/favorite_city/{city_id}/toggle_alert")
-def toggle_send_alert(city_id: int, db: Session = Depends(database.get_db), current_user: models.Users = Depends(get_current_user)):
+def toggle_send_alert(city_id: int, db: Session = Depends(database.get_db),
+                      current_user: models.Users = Depends(get_current_user)):
+    """
+    Toggle the alert flag for a favorite city.
+    """
     # Get the favorite location by ID and ensure it belongs to the current user
     favorite_location = db.query(models.FavoriteLocation).filter(
         models.FavoriteLocation.id == city_id,

@@ -1,4 +1,3 @@
-# app/email_utils.py
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -9,7 +8,7 @@ from app import crud
 from app.config import settings
 
 
-def check_alerts(user_id: int, db: Session, subject: str, body: str):
+def check_alerts(user_id: int, db: Session, subject: str, body: str) -> None:
     """
     Check user data and send weather alert email.
     """
@@ -44,7 +43,7 @@ def send_email(subject: str, body: str, to_email: str) -> None:
         print(f"Error: {e}")
 
 
-async def check_all_users_weather_alerts(db: Session):
+async def check_all_users_weather_alerts(db: Session) -> None:
     """
     Check all favorite cities for every user in the database and send weather alerts if any.
     """

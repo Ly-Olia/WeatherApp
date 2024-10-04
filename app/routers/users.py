@@ -37,7 +37,7 @@ async def user_password_change(request: Request, old_password: str = Form(...),
                                password: str = Form(...),
                                password2: str = Form(...), db: Session = Depends(get_db)):
     """
-        Change the user's password if the old password is verified.
+    Change the user's password if the old password is verified.
     """
     user = await get_current_user(request)
     if user is None:

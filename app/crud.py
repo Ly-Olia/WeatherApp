@@ -10,19 +10,6 @@ from . import models, schemas
 from .config import settings
 
 
-def get_weather_data(db: Session, city: str, country: str) -> Optional[models.WeatherData]:
-    return db.query(models.WeatherData).filter(models.WeatherData.city == city,
-                                               models.WeatherData.country == country).first()
-
-
-def create_weather_data(db: Session, weather_data: schemas.WeatherDataCreate) -> models.WeatherData:
-    db_weather_data = models.WeatherData(**weather_data.model_dump())
-    db.add(db_weather_data)
-    db.commit()
-    db.refresh(db_weather_data)
-    return db_weather_data
-
-
 def get_user(db: Session, user_id: int) -> Optional[models.Users]:
     """
     Retrieve a user by their ID from the database.
@@ -61,18 +48,17 @@ def get_all_users(db: Session) -> list[Type[models.Users]]:
     return db.query(models.Users).all()
 
 
-# In your crud.py file
-def get_users_with_auto_check_enabled(db: Session):
+def get_users_with_auto_check_enabled(db: Session) -> list[Type[models.Users]]:
+    """
+    Retrieve all users with auto-check enabled.
+    """
     return db.query(models.Users).filter(models.Users.auto_check_enabled == True).all()
 
 
-# def get_favorite_locations(db: Session, user_id: int) -> list[Type[models.FavoriteLocation]]:
-#     """
-#     Retrieve a list of favorite locations for a given user.
-#     """
-#     return db.query(models.FavoriteLocation).filter(models.FavoriteLocation.owner_id == user_id).all()
-
 def get_favorite_locations(db: Session, user_id: int, send_alert: bool = None) -> list[Type[models.FavoriteLocation]]:
+    """
+    Retrieve a list of favorite locations for a given user, optionally filtering by send_alert.
+    """
     query = db.query(models.FavoriteLocation).filter(models.FavoriteLocation.owner_id == user_id)
     if send_alert is not None:
         query = query.filter(models.FavoriteLocation.send_alert == send_alert)
@@ -283,21 +269,6 @@ def will_it_rain_today(forecast_data: Dict) -> Tuple[bool, float, List[str]]:
 
     total_rain_volume = round(total_rain_volume, 1)  # Round rain volume to 1 decimal
     return rain_today, total_rain_volume, formatted_rain_periods
-
-
-# async def send_severe_weather_alert(user: models.Users, alert, city):
-#     """
-#     Send an email alert about severe weather conditions.
-#     """
-#
-#     alert_str = "\n".join(alert)
-#     message = (
-#         f"Severe weather conditions are expected in {city}.\n\n"
-#         f"Details: {alert_str}\n"
-#         f"\nBest Regards,\nThe Weather App Team"
-#     )
-#     subject = f"Severe Weather Alert in {city}!"
-#     email_utils.send_email(subject, message, user.email)
 
 
 async def check_extreme_weather(lat: float, lon: float) -> dict:

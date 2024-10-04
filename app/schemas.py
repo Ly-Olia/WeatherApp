@@ -66,3 +66,9 @@ class FavoriteLocation(FavoriteLocationBase):
 
     class Config:
         from_attributes = True
+
+
+class UserVerification(BaseModel):
+    old_password: str
+    password: str
+    password2: str

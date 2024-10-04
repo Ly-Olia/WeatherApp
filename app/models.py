@@ -1,9 +1,6 @@
-# app/models.py
-from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
-from sqlalchemy import func
 
 
 class Users(Base):
@@ -20,7 +17,7 @@ class Users(Base):
     last_name = Column(String)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
-    auto_check_enabled = Column(Boolean, default=False)
+    auto_check_enabled = Column(Boolean, default=False, nullable=False)
 
     favorite_locations = relationship("FavoriteLocation", back_populates="owner")
 
@@ -36,33 +33,7 @@ class FavoriteLocation(Base):
     name = Column(String, index=True)
     latitude = Column(String)
     longitude = Column(String)
-    send_alert = Column(Boolean, default=False)
+    send_alert = Column(Boolean, default=False, nullable=False)
 
     owner_id = Column(Integer, ForeignKey('users.id'))
     owner = relationship("Users", back_populates="favorite_locations")
-
-
-class WeatherData(Base):
-    """
-    Model representing weather data associated with locations.
-    """
-
-    __tablename__ = "weather_data"
-
-    id = Column(Integer, primary_key=True, index=True)
-    location_name = Column(String)
-    latitude = Column(Float)
-    longitude = Column(Float)
-    temperature = Column(Float)
-    humidity = Column(Float)
-    weather_description = Column(String)
-    recorded_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user_id = Column(Integer, ForeignKey('users.id'))
-    user = relationship("Users")
-
-
-class UserVerification(BaseModel):
-    old_password: str
-    password: str
-    password2: str
