@@ -130,7 +130,7 @@ WeatherApp/
 - `POST /weather/favorite_city/{city_name}/delete`: Remove a favorite city.
 - `GET /weather/rain-forecast/{city}`: Get rain forecast for the specified city.
 
-## Alerts
+### Alerts
 - `POST /weather/send-severe-weather-alert/`: Check for severe weather and send an alert via email.
 - `POST /weather/toggle-auto-check`: Enable/disable auto-check of weather for alerts.
 - `POST /weather/favorite_city/{city_id}/toggle_alert`: Toggle the alert flag for a favorite city.
