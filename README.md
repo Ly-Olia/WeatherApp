@@ -24,7 +24,7 @@ To set up the Weather Assistant locally, follow these steps:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/weather-assistant.git
+   git clone https://github.com/Ly-Olia/WeatherApp
    ```
 2. Navigate to the project directory:
    ```bash
