@@ -128,13 +128,17 @@ WeatherApp/
 - `GET /weather/current_weather`: Get current weather for a specific city.
 - `POST /weather/favorite_city/`: Add a city to the user's favorite locations.
 - `POST /weather/favorite_city/{city_name}/delete`: Remove a favorite city.
+- `GET /weather/rain-forecast/{city}`: Get rain forecast for the specified city.
 
 ## Alerts
 - `POST /weather/send-severe-weather-alert/`: Check for severe weather and send an alert via email.
 - `POST /weather/toggle-auto-check`: Enable/disable auto-check of weather for alerts.
+- `POST /weather/favorite_city/{city_id}/toggle_alert`: Toggle the alert flag for a favorite city.
 
 ### Authentication
 
+ - `GET /auth`: Render the authentication (login) page.
+ - `POST /auth`: Handle user login.
  - `POST /auth/token`: Obtain a token for a user.
  - `GET /auth/logout`: Logout the current user.
  - `GET /auth/register`: Render the registration page.
