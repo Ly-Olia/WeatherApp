@@ -23,6 +23,9 @@ A FastAPI-based application that provides real-time weather data, allows users t
 
 ```plaintext
 WeatherApp/
+├── alembic/
+│   ├── versions/
+│   └── env.py
 │
 ├── app/
 │   ├── __init__.py
