@@ -8,7 +8,7 @@ class WeatherDataBase(BaseModel):
 
 
 class WeatherDataCreate(WeatherDataBase):
-    pass
+    ...
 
 
 class WeatherData(BaseModel):
@@ -20,9 +20,6 @@ class WeatherData(BaseModel):
     humidity: int
     weather_description: str
     wind_speed: float
-
-    class Config:
-        from_attributes = True
 
 
 class UserBase(BaseModel):
@@ -40,9 +37,6 @@ class User(UserBase):
     id: int
     is_active: bool
 
-    class Config:
-        from_attributes = True
-
 
 class Login(BaseModel):
     email: str
@@ -54,7 +48,7 @@ class FavoriteLocationBase(BaseModel):
 
 
 class FavoriteLocationCreate(FavoriteLocationBase):
-    pass
+    ...
 
 
 class FavoriteLocation(FavoriteLocationBase):
@@ -63,9 +57,6 @@ class FavoriteLocation(FavoriteLocationBase):
     latitude: str
     longitude: str
     name: str
-
-    class Config:
-        from_attributes = True
 
 
 class UserVerification(BaseModel):

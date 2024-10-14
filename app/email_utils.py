@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 
 from sqlalchemy.orm import Session
 
-from app import crud
+from app import crud, utils
 from app.config import settings
 
 
@@ -59,7 +59,7 @@ async def check_all_users_weather_alerts(db: Session) -> None:
             lat, lon = location.latitude, location.longitude
 
             # Check for extreme weather conditions
-            severe_weather = await crud.check_extreme_weather(lat, lon)
+            severe_weather = await utils.check_extreme_weather(lat, lon)
 
             if severe_weather.get("severe_weather"):
                 alerts = severe_weather.get("alerts")

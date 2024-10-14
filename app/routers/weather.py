@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from sqlalchemy.orm import Session
 from starlette import status
 from starlette.responses import RedirectResponse
-from app import schemas, models, database, crud
+from app import schemas, models, database, crud, utils
 
 from app.email_utils import check_alerts
 from app.routers.auth import get_current_user
@@ -45,19 +45,19 @@ async def get_weather(request: Request, city: str,
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
 
     try:
-        lat, lon = await crud.get_coordinates(city)
+        lat, lon = await utils.get_coordinates(city)
     except HTTPException as e:
         return RedirectResponse(url=f"/weather/?error={e.detail}", status_code=status.HTTP_302_FOUND)
 
-    weather_data = await crud.get_current_weather(lat, lon)
+    weather_data = await utils.get_current_weather(lat, lon)
     if weather_data is None:
         return RedirectResponse(url=f"/weather/?error=Weather data not found for '{city}'.",
                                 status_code=status.HTTP_302_FOUND)
 
-    forecast_data = await crud.get_5_day_forecast(lat, lon)
+    forecast_data = await utils.get_5_day_forecast(lat, lon)
 
     # Call the function to check if it will rain today
-    will_rain, total_rain_volume, rain_times = crud.will_it_rain_today(forecast_data)
+    will_rain, total_rain_volume, rain_times = utils.will_it_rain_today(forecast_data)
     return templates.TemplateResponse("weather_details.html", {
         "request": request,
         "city": city,
@@ -85,7 +85,7 @@ async def add_favorite_city(city: schemas.FavoriteLocationBase, db: Session = De
         return RedirectResponse(url=f"/weather/?error_favorite={error_message}", status_code=status.HTTP_302_FOUND)
 
     try:
-        latitude, longitude = await crud.get_coordinates(city.name)
+        latitude, longitude = await utils.get_coordinates(city.name)
     except HTTPException:
         error_message = f"City not found: {city.name}"
         return RedirectResponse(url=f"/weather/?error_favorite={error_message}", status_code=status.HTTP_302_FOUND)
@@ -127,11 +127,11 @@ async def get_rain_forecast(city: str):
     """
     Get rain forecast for the specified city.
     """
-    lat, lon = await crud.get_coordinates(city)
-    forecast_data = await crud.get_5_day_forecast(lat, lon)
+    lat, lon = await utils.get_coordinates(city)
+    forecast_data = await utils.get_5_day_forecast(lat, lon)
 
     if forecast_data:
-        will_rain, total_rain_volume, rain_period = crud.will_it_rain_today(forecast_data)
+        will_rain, total_rain_volume, rain_period = utils.will_it_rain_today(forecast_data)
         return {
             "city": city,
             "will_rain": will_rain,
@@ -156,8 +156,8 @@ async def check_and_send_alerts(
     if user is None:
         return RedirectResponse(url="/auth", status_code=302)
 
-    lat, lon = await crud.get_coordinates(city)
-    severe_weather = await crud.check_extreme_weather(lat, lon)
+    lat, lon = await utils.get_coordinates(city)
+    severe_weather = await utils.check_extreme_weather(lat, lon)
 
     if severe_weather.get('severe_weather'):
         alerts = severe_weather.get("alerts")
