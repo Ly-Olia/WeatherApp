@@ -10,6 +10,20 @@ A FastAPI-based application that provides real-time weather data, allows users t
 
 ## Installation
 
+### Prerequisites
+
+- Python 3.10+
+- FastAPI
+- SQLAlchemy
+- OpenWeatherMap API Key
+- SMTP credentials for email functionality
+
+To set up the Weather Assistant locally, follow these steps:
+
+### Steps
+
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/weather-app.git
+   git clone https://github.com/your-repo/weather-assistant.git
+   cd weather-assistant
+   ```
