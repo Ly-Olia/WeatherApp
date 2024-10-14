@@ -13,12 +13,16 @@ A FastAPI-based application that provides real-time weather data, allows users t
 ## Technologies Used
 
 - **Backend**: FastAPI
-- **Database**: SQLAlchemy (SQLite)
+- **Database**: PostgreSQL, SQLAlchemy
 - **Templates**: Jinja2
 - **Authentication**: OAuth2 (JWT Tokens)
+- **Password Hashing**: Passlib (bcrypt)
 - **Email Alerts**: SMTP server integration
 - **Weather API**: OpenWeatherMap
-- 
+- **Frontend**: HTML, CSS, JavaScript
+- **Migrations**: Alembic
+
+  
 ## Project Structure
 
 ```plaintext
@@ -73,8 +77,11 @@ WeatherApp/
 - Python 3.10+
 - FastAPI
 - SQLAlchemy
+- PostgreSQL
 - OpenWeatherMap API Key
 - SMTP credentials for email functionality
+- Virtual Environment (optional but recommended)
+
 
 ### Setup
 
@@ -114,6 +121,33 @@ uvicorn app.main:app --reload
 - Access the app at `http://127.0.0.1:8000`.
 
 
+## API Endpoints
+
+### Weather Data
+- `GET /weather/`: Render the main weather page with favorite cities.
+- `GET /weather/current_weather`: Get current weather for a specific city.
+- `POST /weather/favorite_city/`: Add a city to the user's favorite locations.
+- `POST /weather/favorite_city/{city_name}/delete`: Remove a favorite city.
+
+## Alerts
+- `POST /weather/send-severe-weather-alert/`: Check for severe weather and send an alert via email.
+- `POST /weather/toggle-auto-check`: Enable/disable auto-check of weather for alerts.
+
+### Authentication
+
+ - `POST /auth/token`: Obtain a token for a user.
+ - `GET /auth/logout`: Logout the current user.
+ - `GET /auth/register`: Render the registration page.
+ - `POST /auth/register`: Register a new user.
+
+### User Management
+
+ - `GET /users/change-password`: Render the form to change user password.
+ - `POST /users/change-password`: Handle the password change form submission.
+
+## License
+
+- This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 
 
