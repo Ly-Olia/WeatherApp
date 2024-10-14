@@ -21,6 +21,7 @@ A FastAPI-based application that provides real-time weather data, allows users t
 - 
 ## Project Structure
 
+```plaintext
 WeatherApp/
 │
 ├── app/
@@ -48,20 +49,20 @@ WeatherApp/
 │   ├── weather_details.html
 │   └── change-password.html
 │ 
-├── templates/
-│   ├── login.html
-│   ├── layout.html
-│   ├── main_page.html
-│   ├── navbar.html
-│   ├── register.html
-│   ├── weather_details.html
-│   └── change-password.html
+├── static/
+│   ├── css/
+│   │   ├── base.css
+│   │   └── bootstrap.css
+│   └── js/
+│       ├── bootstrap.js
+│       ├── jquery-slim.js
+│       └── popper.js
 │
 ├── requirements.txt
 ├── env.py
 ├── .gitignore
 └── README.md
-
+```
 ## Installation
 
 ### Prerequisites
