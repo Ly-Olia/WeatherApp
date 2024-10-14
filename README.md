@@ -4,9 +4,63 @@ A FastAPI-based application that provides real-time weather data, allows users t
 
 ## Features
 
+- **User Authentication**: Register, login, logout, and change password functionality.
 - **Current Weather**: Fetch real-time weather details by city.
 - **Favorites Management**: Add/remove favorite locations.
 - **Severe Weather Monitoring**: Automatically checks and notifies users by emails of extreme weather events in their favorite locations.
+
+
+## Technologies Used
+
+- **Backend**: FastAPI
+- **Database**: SQLAlchemy (SQLite)
+- **Templates**: Jinja2
+- **Authentication**: OAuth2 (JWT Tokens)
+- **Email Alerts**: SMTP server integration
+- **Weather API**: OpenWeatherMap
+- 
+## Project Structure
+
+WeatherApp/
+│
+├── app/
+│   ├── __init__.py
+│   ├── confid.py
+│   ├── main.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── crud.py
+│   ├── database.py
+│   ├── email_utils.py
+│   ├── utils.py
+│   └── routers/
+│       ├── __init__.py
+│       ├── auth.py
+│       ├── users.py
+│       └── weather.py
+│
+├── templates/
+│   ├── login.html
+│   ├── layout.html
+│   ├── main_page.html
+│   ├── navbar.html
+│   ├── register.html
+│   ├── weather_details.html
+│   └── change-password.html
+│ 
+├── templates/
+│   ├── login.html
+│   ├── layout.html
+│   ├── main_page.html
+│   ├── navbar.html
+│   ├── register.html
+│   ├── weather_details.html
+│   └── change-password.html
+│
+├── requirements.txt
+├── env.py
+├── .gitignore
+└── README.md
 
 ## Installation
 
