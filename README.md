@@ -115,9 +115,9 @@ WeatherApp/
 
 7. **Run the application**:
 - Start the FastAPI server:
-```bash
-uvicorn app.main:app --reload
-```
+  ```bash
+  uvicorn app.main:app --reload
+  ```
 - Access the app at `http://127.0.0.1:8000`.
 
 
