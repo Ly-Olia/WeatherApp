@@ -21,6 +21,7 @@ A FastAPI-based application that provides real-time weather data, allows users t
 - **Weather API**: OpenWeatherMap
 - **Frontend**: HTML, CSS, JavaScript
 - **Migrations**: Alembic
+- **Background Task Scheduling**: APScheduler
 
   
 ## Project Structure
