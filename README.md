@@ -18,19 +18,51 @@ A FastAPI-based application that provides real-time weather data, allows users t
 - OpenWeatherMap API Key
 - SMTP credentials for email functionality
 
-To set up the Weather Assistant locally, follow these steps:
+### Setup
 
-### Steps
-
-1. Clone the repository:
+1. **Clone the repository**:
    ```bash
-   git clone https://github.com/Ly-Olia/WeatherApp
+   https://github.com/Ly-Olia/HabitsApp
    ```
-2. Navigate to the project directory:
+2. **Create and activate a virtual environment**:
    ```bash
-   cd weather-app
+   python -m venv venv
+   source venv/bin/activate
+   # On Windows use
+   venv\Scripts\activate
    ```
-3. Install dependencies:
+3. **Install the dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
+4. **Set environment variables** (e.g., OpenWeatherMap API key, SMTP settings) in `.env`.
+5.  **Set up the database**:
+
+- Make sure PostgreSQL is running.
+- Create a new database for the app.
+- Configure the database URL in the `.env` file.
+
+
+5. **Apply migrations**:
+   ```bash
+   alembic upgrade head
+   ```
+
+7. **Run the application**:
+- Start the FastAPI server:
+```bash
+uvicorn app.main:app --reload
+```
+- Access the app at `http://127.0.0.1:8000`.
+
+
+
+
+
+
+
+
+
+
+
+   
