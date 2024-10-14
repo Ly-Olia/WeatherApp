@@ -4,10 +4,9 @@ A FastAPI-based application that provides real-time weather data, allows users t
 
 ## Features
 
-- **Current Weather**: Fetch real-time weather by city.
+- **Current Weather**: Fetch real-time weather details by city.
 - **Favorites Management**: Add/remove favorite locations.
-- **Email Alerts**: Get weather updates and severe weather alerts.
-- **Severe Weather Check**: Automatic extreme weather notifications.
+- **Severe Weather Monitoring**: Automatically checks and notifies users by emails of extreme weather events in their favorite locations.
 
 ## Installation
 
